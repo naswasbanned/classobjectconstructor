@@ -1,0 +1,1054 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Class, Object, Entitas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: satu kolom panjang dengan navigasi menempel di atas; tiap bagian = penjelasan singkat + satu alat coba.
+   Warna diambil dari Eco-Sorter: hijau organik, biru plastik, merah B3, dan ungu dari slide untuk aksen UI. */
+:root {
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+
+  --bg: #F5F7F4;
+  --surface: #FFFFFF;
+  --surface-2: #EDF1EC;
+  --fg: #1B2420;
+  --muted: #58645D;
+  --line: #D6DDD4;
+  --accent: #5B2D8E;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #EDE4F7;
+  --organic: #23863A;
+  --organic-soft: #DCF1E0;
+  --plastic: #2467B0;
+  --plastic-soft: #DCE9F7;
+  --hazard: #B3332A;
+  --hazard-soft: #F8E1DE;
+
+  --code-bg: #1E1730;
+  --code-fg: #E8E3F2;
+  --code-muted: #9A90B3;
+  --code-kw: #C8A8F6;
+  --code-str: #9BDDA0;
+  --code-type: #F1D58A;
+  --code-num: #F5AB82;
+  --code-red: #F5A39A;
+  --code-mark: rgba(155, 221, 160, .16);
+  --code-bad: rgba(245, 163, 154, .18);
+
+  --stage: #1F2B27;
+  --i-organic: #3FBF5A;
+  --i-plastic: #4C9BEA;
+  --i-hazard: #E4574A;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111613;
+    --surface: #1A211E;
+    --surface-2: #232C28;
+    --fg: #E7EDE8;
+    --muted: #9AA8A0;
+    --line: #2E3934;
+    --accent: #BC9EEA;
+    --accent-ink: #1B1030;
+    --accent-soft: #2C2340;
+    --organic: #55C46B;
+    --organic-soft: #1A3524;
+    --plastic: #6AAAF0;
+    --plastic-soft: #1A2E46;
+    --hazard: #F08377;
+    --hazard-soft: #43211E;
+    --code-bg: #0E1211;
+    --stage: #0F1815;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111613;
+  --surface: #1A211E;
+  --surface-2: #232C28;
+  --fg: #E7EDE8;
+  --muted: #9AA8A0;
+  --line: #2E3934;
+  --accent: #BC9EEA;
+  --accent-ink: #1B1030;
+  --accent-soft: #2C2340;
+  --organic: #55C46B;
+  --organic-soft: #1A3524;
+  --plastic: #6AAAF0;
+  --plastic-soft: #1A2E46;
+  --hazard: #F08377;
+  --hazard-soft: #43211E;
+  --code-bg: #0E1211;
+  --stage: #0F1815;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.6 var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; animation: none !important; }
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1040px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 32px); }
+
+/* navigasi */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.top ul { display: flex; gap: 4px; margin: 0; padding-block: 8px; list-style: none; overflow-x: auto; }
+.top a { display: block; white-space: nowrap; padding: 6px 12px; border-radius: 999px; color: var(--muted); font-size: 14px; font-weight: 500; text-decoration: none; }
+.top a:hover { background: var(--surface-2); color: var(--fg); }
+
+/* teks */
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.12; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.1rem, 5.6vw, 3.6rem); font-weight: 700; letter-spacing: -.02em; }
+h2 { font-size: clamp(1.6rem, 3.6vw, 2.25rem); font-weight: 700; letter-spacing: -.015em; }
+h3 { font-size: 1.15rem; font-weight: 700; }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: .88em; }
+.eyebrow { font: 500 12px/1.3 var(--font-mono); letter-spacing: .09em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); max-width: 64ch; font-size: 1.05rem; }
+.note { color: var(--muted); font-size: 14px; max-width: 70ch; }
+
+section { padding-block: 56px 8px; scroll-margin-top: 56px; }
+.sec-head { display: grid; gap: 10px; margin-bottom: 24px; }
+.hero { padding-block: 48px 8px; display: grid; gap: 16px; }
+
+/* kartu istilah */
+.terms { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 16px; }
+.term { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 8px; align-content: start; min-width: 0; text-decoration: none; color: inherit; }
+.term:hover { border-color: var(--accent); }
+.term .tag { font: 500 11.5px/1.3 var(--font-mono); color: var(--muted); letter-spacing: .04em; }
+.term .word { font: 700 1.6rem/1.1 var(--font-display); }
+.term .ana { font-weight: 600; }
+.term p { color: var(--muted); font-size: 14.5px; }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 16px; }
+.chip { background: var(--surface-2); border: 1px solid var(--line); padding: 4px 12px; border-radius: 999px; font-weight: 600; font-size: 14px; }
+.chip.hl { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.arrow { color: var(--muted); font-size: 13px; }
+
+/* panel & grid */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; align-items: start; }
+.grid2 > * { min-width: 0; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+input, select { font: inherit; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; }
+input[type=range] { padding: 0; accent-color: var(--accent); }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); padding: 0; }
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; font-weight: 500; color: var(--fg); }
+.check span { min-width: 0; }
+.rv { display: flex; justify-content: space-between; gap: 8px; }
+.rv output { color: var(--fg); font-family: var(--font-mono); }
+.btn { font: inherit; font-weight: 600; font-size: 14px; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+.btn:hover:not(:disabled) { border-color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+/* kode */
+pre.code { margin: 0; background: var(--code-bg); color: var(--code-fg); border-radius: 10px; padding: 14px 0; overflow-x: auto; font: 13px/1.7 var(--font-mono); tab-size: 4; }
+pre.code code { font: inherit; display: block; width: max-content; min-width: 100%; }
+pre.code .ln { display: block; padding-inline: 16px; }
+pre.code .ln.ok { background: var(--code-mark); }
+pre.code .ln.bad { background: var(--code-bad); }
+.k { color: var(--code-kw); } .s { color: var(--code-str); } .c { color: var(--code-muted); } .t { color: var(--code-type); } .n { color: var(--code-num); }
+
+/* console */
+ul.console { list-style: none; margin: 0; padding: 10px 12px; background: var(--code-bg); color: var(--code-fg); font: 12.5px/1.65 var(--font-mono); border-radius: 10px; height: 230px; overflow: auto; }
+ul.console li { overflow-wrap: anywhere; }
+ul.console .ts { color: var(--code-muted); }
+ul.console .created { color: var(--code-str); }
+ul.console .destroyed { color: var(--code-red); }
+ul.console .err { color: var(--code-red); }
+.steps { display: flex; flex-wrap: wrap; gap: 8px; }
+.step { padding: 4px 12px; border-radius: 999px; border: 1px dashed var(--line); color: var(--muted); font-size: 13px; font-weight: 600; }
+.step.on { border-style: solid; border-color: var(--organic); background: var(--organic-soft); color: var(--organic); }
+
+/* object cards */
+.counters { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; color: var(--muted); }
+.counters b { color: var(--fg); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.objlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.objcard { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 10px; transition: opacity .3s; min-width: 0; }
+.objcard.gone { opacity: .35; }
+.oc-head { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.oc-head strong { display: block; font: 600 12.5px/1.3 var(--font-mono); overflow-wrap: anywhere; }
+.oc-id { font-size: 12px; color: var(--muted); }
+.shape { width: 22px; height: 22px; flex: none; }
+.shape.organic { border-radius: 50%; background: var(--organic); }
+.shape.plastic { border-radius: 3px; background: var(--plastic); }
+.objcard dl { margin: 0; display: grid; gap: 2px; font-size: 13px; }
+.objcard dl div { display: flex; justify-content: space-between; gap: 8px; }
+.objcard dt { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+.objcard dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+.oc-foot { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+.empty { color: var(--muted); font-size: 14px; padding: 18px 0; }
+
+/* entitas */
+.entlist { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 8px; }
+.entbtn { font: inherit; text-align: left; background: var(--surface); border: 1px solid var(--line); color: var(--fg); border-radius: 10px; padding: 10px 12px; cursor: pointer; display: grid; gap: 4px; min-width: 0; }
+.entbtn:hover { border-color: var(--accent); }
+.entbtn[aria-pressed=true] { border-color: var(--accent); background: var(--accent-soft); }
+.entbtn .res { font: 500 12px/1.2 var(--font-mono); color: var(--muted); }
+.entbtn .res.ok { color: var(--organic); }
+.entbtn .res.bad { color: var(--hazard); }
+.verdict { font-weight: 600; }
+.verdict.ok { color: var(--organic); }
+.verdict.bad { color: var(--hazard); }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font: 500 12px/1.3 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.yes { color: var(--organic); font-weight: 600; white-space: nowrap; }
+.no { color: var(--hazard); font-weight: 600; white-space: nowrap; }
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.tablewrap table { min-width: 640px; }
+.tablewrap tr:last-child td { border-bottom: 0; }
+.sets { border: 1.5px dashed var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 12px; margin-top: 24px; }
+.sets > b { font-family: var(--font-display); }
+.sets .in { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.sets .box { border-radius: 10px; padding: 12px; display: grid; gap: 4px; font-size: 14.5px; }
+.sets .box.e { background: var(--organic-soft); border: 1px solid var(--organic); }
+.sets .box.h { background: var(--plastic-soft); border: 1px solid var(--plastic); }
+.sets .box b { font-family: var(--font-display); }
+.sets .box span { color: var(--muted); }
+
+/* simulasi */
+.stage { position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--stage); border-radius: 10px; overflow: hidden; user-select: none; -webkit-user-select: none; }
+.hud { position: absolute; left: 3%; top: 4%; right: 3%; color: #fff; font: 600 clamp(11px, 1.9vw, 16px)/1.45 var(--font-body); pointer-events: none; text-shadow: 0 1px 2px rgba(0, 0, 0, .5); }
+.item { position: absolute; width: max(5.5%, 34px); aspect-ratio: 1; transform: translate(-50%, -50%); cursor: pointer; touch-action: manipulation; }
+.item.organic { background: var(--i-organic); border-radius: 50%; }
+.item.plastic { background: var(--i-plastic); border-radius: 4px; }
+.item.hazard { background: var(--i-hazard); clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.stats { display: flex; flex-wrap: wrap; gap: 8px; font-size: 13px; }
+.stat { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 4px 10px; color: var(--muted); }
+.stat b { color: var(--fg); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.warn { background: var(--hazard-soft); border: 1px solid var(--hazard); color: var(--hazard); border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: 500; }
+
+/* pohon pewarisan */
+.tree, .tree ul { list-style: none; margin: 0; padding: 0; }
+.tree ul { margin-left: 10px; padding-left: 8px; border-left: 1px solid var(--line); }
+.treebox { overflow-x: auto; }
+.node { font: 500 13.5px/1.3 var(--font-mono); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; width: 100%; text-align: left; padding: 6px 8px; border-radius: 8px; border: 1px solid transparent; background: none; color: var(--fg); cursor: pointer; }
+.node:hover { background: var(--surface-2); }
+.node[aria-pressed=true] { background: var(--accent-soft); border-color: var(--accent); }
+.badge { font: 500 11px/1.2 var(--font-body); padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); }
+.badge.entity { background: var(--organic-soft); border-color: var(--organic); color: var(--organic); }
+.badge.helper { background: var(--plastic-soft); border-color: var(--plastic); color: var(--plastic); }
+.mems { display: flex; flex-wrap: wrap; gap: 6px; }
+.mem { display: inline-flex; flex-direction: column; border-radius: 8px; padding: 4px 10px; border: 1px solid var(--line); background: var(--surface-2); min-width: 0; }
+.mem code { font-size: 12.5px; overflow-wrap: anywhere; }
+.mem em { font-style: normal; font-size: 11px; color: var(--muted); }
+.mem.own { background: var(--accent-soft); border-color: var(--accent); }
+.mem.own em { color: var(--accent); }
+.subhead { font: 500 12px/1.3 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.isa { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+.isa .mid { align-self: center; color: var(--muted); font-weight: 600; text-align: center; }
+
+/* kuis */
+.q { display: grid; gap: 10px; padding-block: 18px; border-top: 1px solid var(--line); }
+.q:first-of-type { border-top: 0; }
+.q h3 { font-family: var(--font-body); font-size: 1rem; font-weight: 600; line-height: 1.45; }
+.opts { display: grid; gap: 8px; }
+.opt { font: inherit; text-align: left; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--organic); background: var(--organic-soft); }
+.opt.wrong { border-color: var(--hazard); background: var(--hazard-soft); }
+.fb { font-size: 14.5px; color: var(--muted); }
+
+footer { padding-block: 56px 48px; color: var(--muted); font-size: 13.5px; }
+</style>
+
+<nav class="top" aria-label="Bagian halaman">
+  <div class="wrap">
+    <ul>
+      <li><a href="#class-object">Class dan object</a></li>
+      <li><a href="#constructor">Constructor</a></li>
+      <li><a href="#entitas">Entitas</a></li>
+      <li><a href="#simulasi">Simulasi</a></li>
+      <li><a href="#pewarisan">Pewarisan</a></li>
+      <li><a href="#kuis">Ringkasan dan kuis</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">Pemrograman Permainan 2D</p>
+    <h1>Class, object, constructor, dan entitas: apa bedanya?</h1>
+    <p class="lead">Empat kata ini sering tertukar. Halaman ini membedakannya lewat contoh game Eco-Sorter dari slide. Setiap bagian punya sesuatu yang bisa kamu coba.</p>
+
+    <div class="terms">
+      <a class="term" href="#class-object">
+        <span class="tag">kode yang kamu tulis</span>
+        <span class="word">Class</span>
+        <span class="ana">Cetakan kue</span>
+        <p>Menentukan data dan perilaku apa yang dimiliki sebuah jenis. Ditulis sekali. Contoh: <code>WasteItem</code>.</p>
+      </a>
+      <a class="term" href="#class-object">
+        <span class="tag">ada di memori saat game jalan</span>
+        <span class="word">Object</span>
+        <span class="ana">Kue hasil cetakan</span>
+        <p>Satu salinan nyata dari class. Jumlahnya banyak dan nilai tiap object terpisah. Contoh: satu lingkaran hijau yang sedang jatuh.</p>
+      </a>
+      <a class="term" href="#constructor">
+        <span class="tag">jalan satu kali saat new</span>
+        <span class="word">Constructor</span>
+        <span class="ana">Cara mengisi kue saat dicetak</span>
+        <p>Method khusus yang mengisi data awal object. Script Unity tidak memakainya, tempatnya diganti <code>Start()</code>.</p>
+      </a>
+      <a class="term" href="#entitas">
+        <span class="tag">istilah desain game</span>
+        <span class="word">Entitas</span>
+        <span class="ana">Penduduk desa</span>
+        <p>Bukan fitur C#. Entitas adalah object yang berdiri sendiri, punya lifecycle, dan jumlahnya bisa banyak.</p>
+      </a>
+    </div>
+
+    <div class="chain" aria-label="Hubungan keempat istilah">
+      <span class="chip">Class</span>
+      <span class="arrow">new atau Instantiate, constructor jalan</span>
+      <span class="chip">Object</span>
+      <span class="arrow">kalau perannya benda hidup di dalam game</span>
+      <span class="chip hl">Entitas</span>
+    </div>
+  </header>
+
+  <!-- CLASS DAN OBJECT -->
+  <section id="class-object">
+    <div class="sec-head">
+      <p class="eyebrow">Class dan object</p>
+      <h2>Satu cetakan, banyak hasil cetak</h2>
+      <p class="lead">Class ditulis sekali di kode. Object dibuat berkali-kali saat game berjalan, dan masing-masing menyimpan nilainya sendiri. Atur nilainya, lalu cetak beberapa object.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h3>Class: cetakannya</h3>
+        <pre class="code" data-hl><code>public class WasteItem : GameEntity
+{
+    [SerializeField] protected int pointValue = 10;
+    [SerializeField] protected float fallSpeed = 2f;
+
+    protected virtual void Update()
+    {
+        // jatuh ke bawah, tiap frame
+    }
+}</code></pre>
+        <p class="note">Slider di bawah meniru Inspector Unity. Nilai dari Inspector mengalahkan nilai awal yang tertulis di kode.</p>
+        <div class="fields">
+          <label for="objType">Jenis
+            <select id="objType">
+              <option value="organic">OrganicWaste (lingkaran)</option>
+              <option value="plastic">PlasticWaste (kotak)</option>
+            </select>
+          </label>
+          <label for="objPoints"><span class="rv">Point Value <output id="objPointsOut">10</output></span>
+            <input id="objPoints" type="range" min="5" max="50" step="5" value="10">
+          </label>
+          <label for="objSpeed"><span class="rv">Fall Speed <output id="objSpeedOut">2</output></span>
+            <input id="objSpeed" type="range" min="1" max="5" step="0.5" value="2">
+          </label>
+        </div>
+        <div class="row">
+          <button type="button" class="btn primary" id="objMake">Buat object (Instantiate)</button>
+          <button type="button" class="btn" id="objClear">Hapus semua</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Object: hasil cetaknya</h3>
+        <div class="counters" aria-live="polite">
+          <span>Class: <b>1</b></span>
+          <span>Object hidup: <b id="cAlive">0</b></span>
+          <span>Pernah dibuat: <b id="cMade">0</b></span>
+          <span>Sudah dihapus: <b id="cGone">0</b></span>
+        </div>
+        <div id="objEmpty" class="empty" hidden>Belum ada object hidup. Tekan Buat object.</div>
+        <div id="objList" class="objlist"></div>
+        <p class="note">Class cuma satu. Object bisa banyak. Hapus satu object dan yang lain tetap jatuh, itulah arti berdiri sendiri. Garis ungu di tiap kartu adalah posisi jatuhnya. Kalau sudah penuh, object itu dihapus.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONSTRUCTOR -->
+  <section id="constructor">
+    <div class="sec-head">
+      <p class="eyebrow">Constructor</p>
+      <h2>Constructor jalan satu kali, tepat saat new</h2>
+      <p class="lead">Tugasnya mengisi data awal object. Urutannya selalu parent class dulu, baru child class. Ini isi Latihan 1 di slide. Ubah isiannya lalu tekan Jalankan.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="fields">
+          <label for="cNama">Nama <input id="cNama" type="text" maxlength="14" value="Goblin" autocomplete="off"></label>
+          <label for="cNyawa">Nyawa <input id="cNyawa" type="number" min="1" max="999" value="30"></label>
+          <label for="cKuat">Kekuatan <input id="cKuat" type="number" min="0" max="999" value="5"></label>
+        </div>
+        <label class="check" for="cBase">
+          <input id="cBase" type="checkbox" checked>
+          <span>Constructor Musuh memakai <code>: base(nama, nyawa)</code></span>
+        </label>
+        <pre class="code" id="ctorCode" aria-label="Kode constructor"></pre>
+      </div>
+
+      <div class="panel">
+        <div class="row">
+          <button type="button" class="btn primary" id="ctorRun">Jalankan new Musuh(...)</button>
+        </div>
+        <div class="steps" aria-hidden="true">
+          <span class="step" id="stp1">1 · Entitas (parent)</span>
+          <span class="step" id="stp2">2 · Musuh (child)</span>
+        </div>
+        <ul class="console" id="ctorOut" aria-live="polite"></ul>
+        <p class="note" id="ctorNote"></p>
+      </div>
+    </div>
+
+    <div class="tablewrap" style="margin-top:16px">
+      <table>
+        <thead><tr><th></th><th>C# biasa (Entitas, Musuh)</th><th>Script Unity (GameEntity, WasteItem)</th></tr></thead>
+        <tbody>
+          <tr><td><b>Yang membuat object</b></td><td>Kamu, lewat <code>new Musuh(...)</code></td><td>Unity, lewat Instantiate atau Add Component. Kamu tidak memanggil new.</td></tr>
+          <tr><td><b>Mengisi data awal</b></td><td>Constructor</td><td><code>Start()</code>, ditambah nilai dari Inspector lewat <code>[SerializeField]</code></td></tr>
+          <tr><td><b>Kapan jalan</b></td><td>Saat baris <code>new</code> dieksekusi</td><td>Unity memanggil <code>Start()</code> satu kali sebelum frame pertama</td></tr>
+          <tr><td><b>Kalau child menulis ulang</b></td><td>Wajib menyebut <code>: base(...)</code> kalau parent punya parameter</td><td>Wajib memanggil <code>base.Start()</code> kalau ingin isi Start parent tetap jalan</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:12px">Class biasa tidak bisa dipasang ke objek di scene. Karena itu Latihan 1 memakai <code>LatihanEntitas</code> (MonoBehaviour) hanya sebagai pemicu.</p>
+  </section>
+
+  <!-- ENTITAS -->
+  <section id="entitas">
+    <div class="sec-head">
+      <p class="eyebrow">Entitas</p>
+      <h2>Entitas itu peran, bukan kata kunci</h2>
+      <p class="lead">Tes cepat dari slide ada tiga: berdiri sendiri, punya lifecycle, dan bisa banyak jumlahnya. Pilih satu benda, tebak entitas atau bukan, lalu lihat hasil tesnya.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h3>Benda di dalam game</h3>
+        <div class="entlist" id="entList"></div>
+        <div class="row">
+          <span class="note" id="entScore"></span>
+          <button type="button" class="btn small" id="entReset">Ulangi dari awal</button>
+        </div>
+      </div>
+      <div class="panel" id="entPanel" aria-live="polite"></div>
+    </div>
+
+    <div class="sets">
+      <b>Semua entitas adalah object, tetapi tidak semua object adalah entitas</b>
+      <div class="in">
+        <div class="box e">
+          <b>Entitas</b>
+          <span>Satu sampah organik, satu musuh, satu peluru, satu koin. Dibuat lalu dihapus, jumlahnya banyak.</span>
+        </div>
+        <div class="box h">
+          <b>Helper (tetap object)</b>
+          <span>ScoreKeeper, WasteSpawner, kamera. Bekerja untuk game, ada sepanjang scene, biasanya hanya satu.</span>
+        </div>
+      </div>
+      <span class="note">Class (misalnya WasteItem) ada di luar lingkaran ini, karena class cuma cetakan dan bukan object.</span>
+    </div>
+  </section>
+
+  <!-- SIMULASI -->
+  <section id="simulasi">
+    <div class="sec-head">
+      <p class="eyebrow">Eco-Sorter mini</p>
+      <h2>Lihat lifecycle entitas berjalan</h2>
+      <p class="lead">Klik sampah yang jatuh. Console di sebelahnya mencatat created dan destroyed untuk setiap entitas. Aturan pencatatan itu ditulis satu kali di <code>GameEntity</code>, dan semua jenis sampah otomatis ikut.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="stage" id="stage">
+          <div class="hud" id="hud"></div>
+        </div>
+        <div class="row">
+          <button type="button" class="btn primary" id="simPause">Jeda</button>
+          <button type="button" class="btn" id="simLow">Kumpulkan yang paling bawah</button>
+          <button type="button" class="btn" id="simReset">Reset</button>
+        </div>
+        <div class="stats" aria-live="polite">
+          <span class="stat">created di log: <b id="stCreated">0</b></span>
+          <span class="stat">destroyed di log: <b id="stDestroyed">0</b></span>
+          <span class="stat">hidup sebenarnya: <b id="stAlive">0</b></span>
+        </div>
+        <div class="warn" id="simWarn" hidden></div>
+      </div>
+
+      <div class="panel">
+        <h3>Console</h3>
+        <ul class="console" id="simLog" aria-live="off"></ul>
+        <h3>Coba ubah kodenya</h3>
+        <label class="check" for="simBase">
+          <input id="simBase" type="checkbox" checked>
+          <span>WasteItem memanggil <code>base.Start()</code></span>
+        </label>
+        <pre class="code" id="simCode" aria-label="Kode WasteItem.Start"></pre>
+        <label class="check" for="simHaz">
+          <input id="simHaz" type="checkbox">
+          <span>Tambah child class baru: <code>HazardousWaste</code> (diamond merah, 50 poin, jatuh 1,5 kali lebih cepat)</span>
+        </label>
+        <p class="note">Perubahan berlaku untuk object yang dibuat sesudahnya. Matikan base.Start() dan lihat angka created di log tertinggal dari jumlah object yang hidup, tanpa tulisan merah apa pun. Tambahkan HazardousWaste dan lihat created dan destroyed tetap tercatat tanpa satu baris pun yang khusus untuknya.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PEWARISAN -->
+  <section id="pewarisan">
+    <div class="sec-head">
+      <p class="eyebrow">Pewarisan</p>
+      <h2>Child class otomatis punya isi parent class</h2>
+      <p class="lead">Pilih sebuah class di pohon. Kamu akan melihat apa yang ia tulis sendiri dan apa yang ia warisi dari rantai di atasnya. Setiap script Unity yang memakai <code>: MonoBehaviour</code> sudah menjadi child class.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h3>Pohon class</h3>
+        <div class="treebox"><ul class="tree" id="tree"></ul></div>
+      </div>
+      <div class="panel" id="clsPanel" aria-live="polite"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>Tes kecocokan: kalimat "A adalah sebuah B" harus masuk akal</h3>
+      <div class="isa">
+        <label for="isaA">A <select id="isaA"></select></label>
+        <span class="mid">adalah sebuah</span>
+        <label for="isaB">B <select id="isaB"></select></label>
+      </div>
+      <p id="isaOut" class="verdict" aria-live="polite"></p>
+      <p class="note">Satu class hanya boleh punya satu parent class.</p>
+    </div>
+  </section>
+
+  <!-- RINGKASAN & KUIS -->
+  <section id="kuis">
+    <div class="sec-head">
+      <p class="eyebrow">Ringkasan dan kuis</p>
+      <h2>Empat istilah, satu tabel</h2>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Istilah</th><th>Intinya</th><th>Di Eco-Sorter</th><th>Di kode</th></tr></thead>
+        <tbody>
+          <tr><td><b>Class</b></td><td>Cetakan: daftar data dan perilaku sebuah jenis</td><td>WasteItem, OrganicWaste, PlasticWaste</td><td><code>public class WasteItem</code></td></tr>
+          <tr><td><b>Object</b></td><td>Satu salinan nyata dari class, ada di memori</td><td>Satu lingkaran hijau yang jatuh</td><td><code>new</code> atau <code>Instantiate</code></td></tr>
+          <tr><td><b>Constructor</b></td><td>Mengisi data awal, jalan satu kali saat new. Di Unity diganti Start</td><td>Pesan "created" muncul di Start</td><td><code>public Musuh(...) : base(...)</code> dan <code>void Start()</code></td></tr>
+          <tr><td><b>Entitas</b></td><td>Object yang berdiri sendiri, punya lifecycle, jumlahnya banyak</td><td>Sampah organik, plastik, B3</td><td>Turunan <code>GameEntity</code></td></tr>
+          <tr><td><b>Sistem entitas</b></td><td>Aturan dan pengurus di luar entitasnya</td><td>WasteSpawner, ScoreKeeper, Remove()</td><td>Empat pertanyaan di slide 10</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel" style="margin-top:24px">
+      <div class="row" style="justify-content:space-between">
+        <h3>Kuis singkat</h3>
+        <span class="note" id="quizScore"></span>
+      </div>
+      <div id="quiz"></div>
+      <div class="row"><button type="button" class="btn small" id="quizReset">Ulangi kuis</button></div>
+    </div>
+  </section>
+
+  <footer>Hope this helps!.</footer>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function clampInt(v, lo, hi, d) { var n = parseInt(v, 10); if (isNaN(n)) return d; return Math.max(lo, Math.min(hi, n)); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  /* ---------- penyorot kode C# sederhana ---------- */
+  var KW = 'public|protected|private|class|void|int|float|string|override|virtual|new|base|this|return|if|else|using|bool|true|false';
+  var RX = new RegExp('(\\/\\/[^\\n]*)|("(?:[^"\\\\]|\\\\.)*")|\\b(' + KW + ')\\b|\\b([A-Z][A-Za-z0-9_]*)\\b|\\b(\\d+(?:\\.\\d+)?f?)\\b', 'g');
+  function hl(src) {
+    return esc(src).replace(RX, function (m, c, s, k, t, n) {
+      if (c) return '<span class="c">' + c + '</span>';
+      if (s) return '<span class="s">' + s + '</span>';
+      if (k) return '<span class="k">' + k + '</span>';
+      if (t) return '<span class="t">' + t + '</span>';
+      return '<span class="n">' + n + '</span>';
+    });
+  }
+  function hlLines(lines) {
+    // lines: [{t: 'teks', m: 'ok'|'bad'|undefined}]
+    return '<code>' + lines.map(function (l) {
+      return '<span class="ln' + (l.m ? ' ' + l.m : '') + '">' + (hl(l.t) || ' ') + '</span>';
+    }).join('') + '</code>';
+  }
+  $$('pre[data-hl] code').forEach(function (c) { c.innerHTML = hl(c.textContent); });
+
+  /* ---------- 1. class dan object ---------- */
+  var OBJ_NAMES = { organic: 'OrganicWaste', plastic: 'PlasticWaste' };
+  var objs = [], objSeq = 0, objMade = 0, objGone = 0;
+  var objList = $('#objList'), objEmpty = $('#objEmpty');
+
+  function updateObjCounters() {
+    $('#cAlive').textContent = objs.length;
+    $('#cMade').textContent = objMade;
+    $('#cGone').textContent = objGone;
+    objEmpty.hidden = objs.length > 0;
+  }
+  function makeObj(type, pv, fs, p0) {
+    var o = { id: ++objSeq, type: type, pv: pv, fs: fs, p: p0 || 0, gone: false };
+    var el = document.createElement('article');
+    el.className = 'objcard';
+    el.innerHTML =
+      '<div class="oc-head"><span class="shape ' + type + '"></span><div><strong>' + OBJ_NAMES[type] + '(Clone)</strong><span class="oc-id">object #' + o.id + '</span></div></div>' +
+      '<dl><div><dt>pointValue</dt><dd>' + pv + '</dd></div><div><dt>fallSpeed</dt><dd>' + fs + '</dd></div></dl>' +
+      '<div class="meter" aria-hidden="true"><i></i></div>' +
+      '<div class="oc-foot"><span class="oc-state">alive</span><button type="button" class="btn small" aria-label="Destroy object #' + o.id + '">Destroy</button></div>';
+    o.el = el; o.bar = $('.meter i', el); o.state = $('.oc-state', el);
+    $('button', el).addEventListener('click', function () { destroyObj(o); });
+    objs.push(o); objList.appendChild(el); objMade++;
+    updateObjCounters();
+    return o;
+  }
+  function destroyObj(o) {
+    if (o.gone) return;
+    o.gone = true; o.el.classList.add('gone'); o.state.textContent = 'destroyed';
+    $('button', o.el).disabled = true;
+    objGone++;
+    objs = objs.filter(function (x) { return x !== o; });
+    updateObjCounters();
+    setTimeout(function () { o.el.remove(); }, 800);
+  }
+  $('#objPoints').addEventListener('input', function (e) { $('#objPointsOut').textContent = e.target.value; });
+  $('#objSpeed').addEventListener('input', function (e) { $('#objSpeedOut').textContent = e.target.value; });
+  $('#objMake').addEventListener('click', function () {
+    if (objs.length >= 12) return;
+    makeObj($('#objType').value, parseInt($('#objPoints').value, 10), parseFloat($('#objSpeed').value));
+  });
+  $('#objClear').addEventListener('click', function () { objs.slice().forEach(destroyObj); });
+  makeObj('organic', 10, 2, 0.35);
+  makeObj('plastic', 25, 3, 0.1);
+
+  /* ---------- 2. constructor ---------- */
+  var ctorRun = 0;
+  function renderCtorCode(nama, nyawa, kuat, useBase) {
+    var L = [];
+    L.push({ t: 'public class Entitas' });
+    L.push({ t: '{' });
+    L.push({ t: '    protected string nama;' });
+    L.push({ t: '    protected int nyawa;' });
+    L.push({ t: '' });
+    L.push({ t: '    public Entitas(string nama, int nyawa)' });
+    L.push({ t: '    {' });
+    L.push({ t: '        this.nama = nama;' });
+    L.push({ t: '        this.nyawa = nyawa;' });
+    L.push({ t: '        Debug.Log("[1] Constructor Entitas: " + nama + ", nyawa " + nyawa);' });
+    L.push({ t: '    }' });
+    L.push({ t: '}' });
+    L.push({ t: '' });
+    L.push({ t: 'public class Musuh : Entitas' });
+    L.push({ t: '{' });
+    L.push({ t: '    protected int kekuatan;' });
+    L.push({ t: '' });
+    L.push({ t: '    public Musuh(string nama, int nyawa, int kekuatan)', m: useBase ? null : 'bad' });
+    if (useBase) L.push({ t: '        : base(nama, nyawa)', m: 'ok' });
+    L.push({ t: '    {' });
+    L.push({ t: '        this.kekuatan = kekuatan;' });
+    L.push({ t: '        Debug.Log("[2] Constructor Musuh: kekuatan " + kekuatan);' });
+    L.push({ t: '    }' });
+    L.push({ t: '}' });
+    L.push({ t: '' });
+    L.push({ t: '// pemanggilan' });
+    L.push({ t: 'Musuh goblin = new Musuh("' + nama + '", ' + nyawa + ', ' + kuat + ');' });
+    $('#ctorCode').innerHTML = hlLines(L);
+  }
+  function setStep(n) {
+    $('#stp1').classList.toggle('on', n >= 1);
+    $('#stp2').classList.toggle('on', n >= 2);
+  }
+  function runCtor(instant) {
+    var id = ++ctorRun;
+    var nama = ($('#cNama').value || '').replace(/["\\]/g, '').slice(0, 14).trim() || 'Goblin';
+    var nyawa = clampInt($('#cNyawa').value, 1, 999, 30);
+    var kuat = clampInt($('#cKuat').value, 0, 999, 5);
+    var useBase = $('#cBase').checked;
+    renderCtorCode(nama, nyawa, kuat, useBase);
+    var out = $('#ctorOut'); out.innerHTML = ''; setStep(0);
+    var lines = useBase ? [
+      { t: '[1] Constructor Entitas: ' + nama + ', nyawa ' + nyawa, step: 1 },
+      { t: '[2] Constructor Musuh: kekuatan ' + kuat, step: 2 },
+      { t: 'Halo, aku ' + nama + ' (nyawa ' + nyawa + ')' },
+      { t: nama + ' menyerang dengan kekuatan ' + kuat }
+    ] : [
+      { t: "error CS7036: There is no argument given that corresponds to the required parameter 'nama' of 'Entitas.Entitas(string, int)'", err: true }
+    ];
+    $('#ctorNote').textContent = useBase
+      ? 'Constructor Entitas tercatat lebih dulu. Parent class selesai mengisi nama dan nyawa, baru child class mengisi kekuatan.'
+      : 'Parent class butuh nama dan nyawa, tetapi child class tidak menyebutkan caranya. Constructor tidak diwariskan, jadi child class harus memakai : base(...).';
+    lines.forEach(function (l, i) {
+      function go() {
+        if (id !== ctorRun) return;
+        var li = document.createElement('li');
+        if (l.err) li.className = 'err';
+        li.textContent = l.t;
+        out.appendChild(li);
+        if (l.step) setStep(l.step);
+      }
+      if (instant) go(); else setTimeout(go, i * 500);
+    });
+  }
+  $('#ctorRun').addEventListener('click', function () { runCtor(false); });
+  ['#cNama', '#cNyawa', '#cKuat'].forEach(function (s) { $(s).addEventListener('input', function () { runCtor(true); }); });
+  $('#cBase').addEventListener('change', function () { runCtor(true); });
+  runCtor(true);
+
+  /* ---------- 3. entitas ---------- */
+  var TESTS = ['Berdiri sendiri (data dan perilaku sendiri)', 'Punya lifecycle (dibuat lalu dihapus)', 'Jumlahnya bisa banyak'];
+  var ENT = [
+    { id: 0, label: 'Satu sampah organik yang sedang jatuh', a: [1, 1, 1], why: 'Posisi dan nilainya sendiri, dibuat lalu dihapus, dan muncul berkali-kali. Ini contoh entitas yang dipakai di slide.' },
+    { id: 1, label: 'Satu musuh di level', a: [1, 1, 1], why: 'Setiap musuh punya nyawa sendiri, muncul, lalu kalah. Jumlahnya banyak.' },
+    { id: 2, label: 'Satu peluru yang ditembakkan', a: [1, 1, 1], why: 'Dibuat saat menembak dan hilang saat mengenai sesuatu atau keluar layar.' },
+    { id: 3, label: 'Satu koin', a: [1, 1, 1], why: 'Muncul di level, dihapus saat diambil, dan jumlahnya banyak.' },
+    { id: 4, label: 'Kamera (Main Camera)', a: [1, 0, 0], why: 'Hanya ada satu dan hidup sepanjang scene. Kamera itu helper, bukan entitas.' },
+    { id: 5, label: 'ScoreKeeper (papan skor)', a: [1, 0, 0], why: 'Menyimpan skor sepanjang game dan hanya ada satu. Tidak dibuat dan dihapus per kejadian, jadi ia helper.' },
+    { id: 6, label: 'WasteSpawner', a: [1, 0, 0], why: 'Ia yang memunculkan sampah, bukan sampahnya. Ada satu dan hidup sepanjang scene, jadi ia helper.' },
+    { id: 7, label: 'Class WasteItem (tulisan di kodenya)', a: [0, 0, 0], why: 'Class hanya cetakan. Belum ada yang jatuh dan belum ada yang bisa diklik. Entitas selalu berupa object, dan class bukan object.' }
+  ];
+  var entSel = 0, entAns = {};
+  function isEnt(e) { return e.a[0] && e.a[1] && e.a[2]; }
+  function renderEnt() {
+    var list = $('#entList');
+    list.innerHTML = ENT.map(function (e) {
+      var r = entAns[e.id];
+      var res = r === undefined ? '' : (r.ok ? '<span class="res ok">jawabanmu benar</span>' : '<span class="res bad">jawabanmu keliru</span>');
+      return '<button type="button" class="entbtn" data-id="' + e.id + '" aria-pressed="' + (e.id === entSel) + '"><span>' + e.label + '</span>' + res + '</button>';
+    }).join('');
+    var e = ENT[entSel], r = entAns[e.id], p = $('#entPanel');
+    var html = '<h3>' + e.label + '</h3>';
+    if (!r) {
+      html += '<p>Apakah ini entitas?</p><div class="row"><button type="button" class="btn primary" data-ans="1">Entitas</button><button type="button" class="btn" data-ans="0">Bukan entitas</button></div>';
+    } else {
+      html += '<p class="verdict ' + (r.ok ? 'ok' : 'bad') + '">Jawabanmu ' + (r.ok ? 'benar' : 'keliru') + '. Ini ' + (isEnt(e) ? 'entitas' : 'bukan entitas') + '.</p>';
+      html += '<table><tbody>' + TESTS.map(function (t, i) {
+        return '<tr><td>' + t + '</td><td class="' + (e.a[i] ? 'yes' : 'no') + '">' + (e.a[i] ? '✓ ya' : '✗ tidak') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+      html += '<p>' + e.why + '</p>';
+      html += '<div class="row"><button type="button" class="btn small" data-next="1">Benda berikutnya</button></div>';
+    }
+    p.innerHTML = html;
+    var done = Object.keys(entAns).length, good = Object.keys(entAns).filter(function (k) { return entAns[k].ok; }).length;
+    $('#entScore').textContent = done ? 'Benar ' + good + ' dari ' + done + ' yang sudah dijawab.' : 'Belum ada yang dijawab.';
+  }
+  $('#entList').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.entbtn'); if (!b) return;
+    entSel = parseInt(b.getAttribute('data-id'), 10); renderEnt();
+  });
+  $('#entPanel').addEventListener('click', function (ev) {
+    var a = ev.target.closest('[data-ans]');
+    if (a) {
+      var e = ENT[entSel], guess = a.getAttribute('data-ans') === '1';
+      entAns[e.id] = { ok: guess === !!isEnt(e) };
+      renderEnt(); return;
+    }
+    if (ev.target.closest('[data-next]')) {
+      var n = ENT.length;
+      for (var i = 1; i <= n; i++) {
+        var j = (entSel + i) % n;
+        if (!entAns[j]) { entSel = j; break; }
+        if (i === n) entSel = (entSel + 1) % n;
+      }
+      renderEnt();
+    }
+  });
+  $('#entReset').addEventListener('click', function () { entAns = {}; entSel = 0; renderEnt(); });
+  renderEnt();
+
+  /* ---------- 4. simulasi Eco-Sorter (class JavaScript meniru hierarki C#) ---------- */
+  var stage = $('#stage'), con = $('#simLog');
+  var sim = { running: !reduce, entities: [], timer: 0, interval: 1, created: 0, destroyed: 0, baseStart: true, hazard: false };
+  var score = { points: 0, missed: 0, message: 'Klik sampah sebelum jatuh!' };
+
+  function renderHud() {
+    $('#hud').innerHTML = 'Skor: ' + score.points + ' &nbsp; Terlewat: ' + score.missed + '<br>' + esc(score.message);
+  }
+  function simLog(text, kind) {
+    var d = new Date(), li = document.createElement('li');
+    var ts = document.createElement('span'); ts.className = 'ts'; ts.textContent = '[' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '] ';
+    var tx = document.createElement('span'); if (kind) tx.className = kind; tx.textContent = text;
+    li.appendChild(ts); li.appendChild(tx); con.appendChild(li);
+    while (con.children.length > 80) con.removeChild(con.firstChild);
+    con.scrollTop = con.scrollHeight;
+    renderStats();
+  }
+  function renderStats() {
+    $('#stCreated').textContent = sim.created;
+    $('#stDestroyed').textContent = sim.destroyed;
+    $('#stAlive').textContent = sim.entities.length;
+    var fromLog = sim.created - sim.destroyed, real = sim.entities.length, w = $('#simWarn');
+    if (fromLog !== real) {
+      w.hidden = false;
+      w.textContent = 'Hitungan dari log (created dikurangi destroyed) menyebut ' + fromLog + ' object hidup, padahal yang hidup ada ' + real + '. Satu baris yang terlupa membuat hitungan salah tanpa error.';
+    } else { w.hidden = true; }
+  }
+
+  function GameEntity() { this.dead = false; }
+  GameEntity.prototype.start = function () { simLog(this.name + ' created', 'created'); sim.created++; renderStats(); };
+  GameEntity.prototype.onDestroy = function () { simLog(this.name + ' destroyed', 'destroyed'); sim.destroyed++; renderStats(); };
+  GameEntity.prototype.remove = function () {
+    if (this.dead) return;
+    this.dead = true;
+    sim.entities = sim.entities.filter(function (e) { return e !== this; }, this);
+    this.el.remove();
+    this.onDestroy();
+  };
+
+  function inherit(Child, Parent) { Child.prototype = Object.create(Parent.prototype); Child.prototype.constructor = Child; }
+
+  function WasteItem(x, y) {
+    GameEntity.call(this);
+    this.pointValue = this.constructor.pv; this.fallSpeed = this.constructor.fs;
+    this.info = 'Sampah terkumpul';
+    this.name = this.constructor.label + '(Clone)';
+    this.x = x; this.y = y;
+    var self = this;
+    this.el = document.createElement('div');
+    this.el.className = 'item ' + this.constructor.shape;
+    this.el.addEventListener('pointerdown', function (ev) { ev.preventDefault(); self.onMouseDown(); });
+    stage.appendChild(this.el);
+    this.place();
+  }
+  inherit(WasteItem, GameEntity);
+  WasteItem.prototype.place = function () {
+    this.el.style.left = (50 + this.x / 17.78 * 100) + '%';
+    this.el.style.top = ((5 - this.y) / 10 * 100) + '%';
+  };
+  WasteItem.prototype.start = function () { if (sim.baseStart) GameEntity.prototype.start.call(this); };
+  WasteItem.prototype.update = function (dt) {
+    this.y -= this.fallSpeed * dt; this.place();
+    if (this.y < -6) { score.missed++; score.message = 'Sampah terlewat dan mencemari lingkungan!'; renderHud(); this.remove(); }
+  };
+  WasteItem.prototype.onMouseDown = function () { this.collect(); };
+  WasteItem.prototype.collect = function () {
+    simLog(this.info);
+    score.points += this.pointValue; score.message = this.info; renderHud();
+    this.remove();
+  };
+
+  function OrganicWaste(x, y) { WasteItem.call(this, x, y); }
+  inherit(OrganicWaste, WasteItem);
+  OrganicWaste.label = 'OrganicWaste'; OrganicWaste.shape = 'organic'; OrganicWaste.pv = 10; OrganicWaste.fs = 2;
+  OrganicWaste.prototype.collect = function () {
+    this.info = 'Organik: olah menjadi kompos (+' + this.pointValue + ' poin)';
+    WasteItem.prototype.collect.call(this);
+  };
+
+  function PlasticWaste(x, y) { WasteItem.call(this, x, y); }
+  inherit(PlasticWaste, WasteItem);
+  PlasticWaste.label = 'PlasticWaste'; PlasticWaste.shape = 'plastic'; PlasticWaste.pv = 25; PlasticWaste.fs = 3;
+  PlasticWaste.prototype.collect = function () {
+    this.info = 'Plastik: didaur ulang (+' + this.pointValue + ' poin)';
+    WasteItem.prototype.collect.call(this);
+  };
+
+  function HazardousWaste(x, y) { WasteItem.call(this, x, y); this.swayAmount = 2; }
+  inherit(HazardousWaste, WasteItem);
+  HazardousWaste.label = 'HazardousWaste'; HazardousWaste.shape = 'hazard'; HazardousWaste.pv = 50; HazardousWaste.fs = 2;
+  HazardousWaste.prototype.start = function () { WasteItem.prototype.start.call(this); this.fallSpeed = this.fallSpeed * 1.5; };
+  HazardousWaste.prototype.update = function (dt) {
+    WasteItem.prototype.update.call(this, dt);
+    if (!this.dead) { this.x += Math.sin(performance.now() / 1000 * 4) * this.swayAmount * dt; this.place(); }
+  };
+  HazardousWaste.prototype.collect = function () {
+    this.info = 'BERBAHAYA: serahkan ke pengelola B3 (+' + this.pointValue + ' poin)';
+    WasteItem.prototype.collect.call(this);
+  };
+
+  function spawn(Cls, x, y) {
+    var e = new Cls(x, y);
+    sim.entities.push(e);
+    e.start();
+    return e;
+  }
+  function spawnRandom() {
+    var prefabs = [OrganicWaste, PlasticWaste]; if (sim.hazard) prefabs.push(HazardousWaste);
+    var Cls = prefabs[Math.floor(Math.random() * prefabs.length)];
+    spawn(Cls, (Math.random() * 2 - 1) * 7, 6);
+  }
+  function simUpdate(dt) {
+    if (!sim.running) return;
+    sim.timer += dt;
+    if (sim.timer >= sim.interval) { sim.timer = 0; spawnRandom(); }
+    sim.entities.slice().forEach(function (e) { if (!e.dead) e.update(dt); });
+  }
+  function renderSimCode() {
+    var L = [
+      { t: 'protected override void Start()' },
+      { t: '{' },
+      sim.baseStart ? { t: '    base.Start();', m: 'ok' } : { t: '    // base.Start();', m: 'bad' },
+      { t: '    scoreKeeper = FindAnyObjectByType<ScoreKeeper>();' },
+      { t: '}' }
+    ];
+    $('#simCode').innerHTML = hlLines(L);
+  }
+  function simSeed() {
+    spawn(OrganicWaste, -3.5, 3.2);
+    spawn(PlasticWaste, 2.5, 4.4);
+  }
+  function simReset() {
+    sim.entities.forEach(function (e) { e.dead = true; e.el.remove(); });
+    sim.entities = []; sim.timer = 0; sim.created = 0; sim.destroyed = 0;
+    score.points = 0; score.missed = 0; score.message = 'Klik sampah sebelum jatuh!';
+    con.innerHTML = ''; renderHud(); renderStats(); simSeed();
+  }
+  function syncPause() { $('#simPause').textContent = sim.running ? 'Jeda' : 'Lanjut'; }
+  $('#simPause').addEventListener('click', function () { sim.running = !sim.running; syncPause(); });
+  $('#simReset').addEventListener('click', simReset);
+  $('#simLow').addEventListener('click', function () {
+    var low = null;
+    sim.entities.forEach(function (e) { if (!low || e.y < low.y) low = e; });
+    if (low) low.onMouseDown();
+  });
+  $('#simBase').addEventListener('change', function (e) { sim.baseStart = e.target.checked; renderSimCode(); });
+  $('#simHaz').addEventListener('change', function (e) { sim.hazard = e.target.checked; });
+  renderHud(); renderSimCode(); syncPause(); simSeed();
+
+  /* ---------- 5. pewarisan ---------- */
+  var CLS = [
+    { n: 'Object', p: null, kind: 'unity', m: [{ n: 'name' }, { n: 'Destroy()' }, { n: 'Instantiate()' }], note: 'Akar dari semua objek Unity. Remove() di GameEntity memanggil Destroy() yang diwarisi dari sini.' },
+    { n: 'Component', p: 'Object', kind: 'unity', m: [{ n: 'transform' }, { n: 'gameObject' }] },
+    { n: 'Behaviour', p: 'Component', kind: 'unity', m: [{ n: 'enabled' }] },
+    { n: 'MonoBehaviour', p: 'Behaviour', kind: 'unity', m: [{ n: 'StartCoroutine()' }, { n: 'Invoke()' }], note: 'Unity memanggil Start, Update, OnDestroy, dan OnMouseDown kalau class kamu menuliskannya. Itu pesan dari Unity, bukan method yang kamu override.' },
+    { n: 'GameEntity', p: 'MonoBehaviour', kind: 'entity', m: [{ n: 'Start()', k: 'virtual' }, { n: 'OnDestroy()', k: 'virtual' }, { n: 'Remove()', k: 'virtual' }], note: 'Aturan created, destroyed, dan Remove() ditulis sekali di sini.' },
+    { n: 'WasteItem', p: 'GameEntity', kind: 'entity', m: [{ n: 'pointValue' }, { n: 'fallSpeed' }, { n: 'info' }, { n: 'scoreKeeper' }, { n: 'Start()', k: 'override' }, { n: 'Update()', k: 'virtual' }, { n: 'OnMouseDown()' }, { n: 'Collect()', k: 'virtual' }] },
+    { n: 'OrganicWaste', p: 'WasteItem', kind: 'entity', m: [{ n: 'Collect()', k: 'override' }], note: 'Hanya satu method pendek. Sisanya dikerjakan parent class.' },
+    { n: 'PlasticWaste', p: 'WasteItem', kind: 'entity', m: [{ n: 'Collect()', k: 'override' }], note: 'Beda dari organik hanya di pesan dan nilai di Inspector.' },
+    { n: 'HazardousWaste', p: 'WasteItem', kind: 'entity', m: [{ n: 'swayAmount' }, { n: 'Start()', k: 'override' }, { n: 'Update()', k: 'override' }, { n: 'Collect()', k: 'override' }], note: 'Tantangan mandiri di slide. Ia punya gerakan goyang sendiri, tetapi created dan destroyed tetap otomatis.' },
+    { n: 'ScoreKeeper', p: 'MonoBehaviour', kind: 'helper', m: [{ n: 'AddPoints()' }, { n: 'AddMissed()' }, { n: 'OnGUI()' }], note: 'Bukan entitas: ia tidak mewarisi GameEntity, jadi tidak ikut aturan created dan destroyed.' },
+    { n: 'WasteSpawner', p: 'MonoBehaviour', kind: 'helper', m: [{ n: 'wastePrefabs' }, { n: 'interval' }, { n: 'Update()' }], note: 'Bukan entitas: ia hanya memunculkan sampah dari prefab.' }
+  ];
+  var byName = {}; CLS.forEach(function (c) { byName[c.n] = c; });
+  var KIND = { unity: 'bawaan Unity', entity: 'entitas', helper: 'helper' };
+  var clsSel = 'WasteItem';
+
+  function childrenOf(p) { return CLS.filter(function (c) { return c.p === p; }); }
+  function treeHtml(p) {
+    return childrenOf(p).map(function (c) {
+      var kids = childrenOf(c.n);
+      return '<li><button type="button" class="node" data-cls="' + c.n + '" aria-pressed="' + (c.n === clsSel) + '">' + c.n +
+        '<span class="badge ' + (c.kind === 'unity' ? '' : c.kind) + '">' + KIND[c.kind] + '</span></button>' +
+        (kids.length ? '<ul>' + treeHtml(c.n) + '</ul>' : '') + '</li>';
+    }).join('');
+  }
+  function memHtml(m, label, own) {
+    var tag = own ? (m.k || 'baru') : label;
+    return '<span class="mem ' + (own ? 'own' : 'inh') + '"><code>' + esc(m.n) + '</code><em>' + esc(tag) + '</em></span>';
+  }
+  function renderCls() {
+    $('#tree').innerHTML = treeHtml(null);
+    var c = byName[clsSel], chain = [], a = c.p;
+    while (a) { chain.unshift(byName[a]); a = byName[a].p; }
+    var ownNames = {}; c.m.forEach(function (m) { ownNames[m.n] = 1; });
+    var inh = {}, order = [];
+    chain.forEach(function (anc) { anc.m.forEach(function (m) { if (!(m.n in inh)) order.push(m.n); inh[m.n] = { m: m, from: anc.n }; }); });
+    var inherited = order.filter(function (k) { return !ownNames[k]; }).map(function (k) { return inh[k]; });
+    var head = 'public class ' + c.n + (c.p ? ' : ' + c.p : '');
+    var html = '<h3>' + c.n + '</h3><pre class="code">' + hlLines([{ t: head }]) + '</pre>';
+    if (c.note) html += '<p class="note">' + esc(c.note) + '</p>';
+    html += '<p class="subhead">Milik sendiri (' + c.m.length + ')</p><div class="mems">' + c.m.map(function (m) { return memHtml(m, '', true); }).join('') + '</div>';
+    html += '<p class="subhead">Diwarisi (' + inherited.length + ')</p>';
+    html += inherited.length
+      ? '<div class="mems">' + inherited.map(function (x) { return memHtml(x.m, 'dari ' + x.from, false); }).join('') + '</div>'
+      : '<p class="note">Tidak ada. Ini akar pohonnya.</p>';
+    if (chain.length) html += '<p class="note">Rantai ke atas: ' + [c.n].concat(chain.slice().reverse().map(function (x) { return x.n; })).join(' → ') + '</p>';
+    $('#clsPanel').innerHTML = html;
+  }
+  $('#tree').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.node'); if (!b) return;
+    clsSel = b.getAttribute('data-cls'); renderCls();
+  });
+  renderCls();
+
+  // tes "A adalah sebuah B"
+  var names = CLS.map(function (c) { return c.n; });
+  var optHtml = names.map(function (n) { return '<option value="' + n + '">' + n + '</option>'; }).join('');
+  $('#isaA').innerHTML = optHtml; $('#isaB').innerHTML = optHtml;
+  $('#isaA').value = 'OrganicWaste'; $('#isaB').value = 'GameEntity';
+  function climb(n) { var out = [n]; while (byName[n].p) { n = byName[n].p; out.push(n); } return out; }
+  function renderIsa() {
+    var A = $('#isaA').value, B = $('#isaB').value, out = $('#isaOut'), cA = climb(A), cB = climb(B);
+    if (A === B) { out.className = 'verdict'; out.textContent = A + ' dan ' + B + ' adalah class yang sama. Itu bukan pewarisan.'; return; }
+    var i = cA.indexOf(B);
+    if (i > 0) { out.className = 'verdict ok'; out.textContent = A + ' adalah sebuah ' + B + '. Masuk akal, rantainya: ' + cA.slice(0, i + 1).join(' → ') + '.'; return; }
+    if (cB.indexOf(A) > 0) { out.className = 'verdict bad'; out.textContent = 'Terbalik. ' + A + ' adalah parent dari ' + B + ', jadi yang masuk akal: ' + B + ' adalah sebuah ' + A + '.'; return; }
+    out.className = 'verdict bad'; out.textContent = A + ' bukan sebuah ' + B + '. Tidak ada rantai pewarisan dari ' + A + ' ke ' + B + '.';
+  }
+  $('#isaA').addEventListener('change', renderIsa); $('#isaB').addEventListener('change', renderIsa);
+  renderIsa();
+
+  /* ---------- 6. kuis ---------- */
+  var QUIZ = [
+    { q: 'Kode new Musuh("Goblin", 30, 5) membuat apa?', o: ['Class Musuh yang baru', 'Satu object dari class Musuh', 'Constructor baru untuk Musuh', 'Parent class Entitas'], a: 1, why: 'Class sudah ada di kode. Kata new mencetak satu object dari class itu dan menjalankan constructor-nya.' },
+    { q: 'Saat new Musuh(...) dijalankan, constructor mana yang jalan lebih dulu?', o: ['Constructor Musuh (child)', 'Constructor Entitas (parent)', 'Keduanya bersamaan', 'Tergantung nama class'], a: 1, why: 'Urutannya selalu parent class dulu, baru child class. Itu sebabnya log [1] Entitas muncul sebelum [2] Musuh.' },
+    { q: 'Mengapa script Unity memakai Start() dan bukan constructor?', o: ['Constructor sudah dihapus dari C#', 'Unity yang membuat object-nya dan memanggil Start() untuk persiapan', 'Start() lebih cepat dari constructor', 'Script Unity tidak boleh punya variabel'], a: 1, why: 'Kamu tidak memanggil new untuk MonoBehaviour. Unity membuatnya lewat Instantiate atau Add Component, lalu memanggil Start() satu kali.' },
+    { q: 'Mana yang BUKAN entitas di Eco-Sorter?', o: ['Satu sampah plastik yang jatuh', 'Satu sampah organik yang jatuh', 'ScoreKeeper', 'Sampah plastik yang lain'], a: 2, why: 'ScoreKeeper hanya satu, hidup sepanjang scene, dan tidak dibuat lalu dihapus. Ia helper.' },
+    { q: 'Sampah kaca hanya beda poin dan warna dari sampah organik. Apa yang sebaiknya dibuat?', o: ['Class baru yang disalin dari OrganicWaste', 'Prefab baru dengan nilai di Inspector', 'Constructor baru di GameEntity', 'Scene baru'], a: 1, why: 'Kalau bedanya hanya data, cukup prefab baru. Class baru dibuat kalau perilakunya berbeda.' },
+    { q: 'base.Start() dihapus dari WasteItem. Apa akibatnya?', o: ['Error merah di Console', 'Game berhenti jalan', 'Tidak ada error, tetapi catatan created hilang', 'Catatan destroyed ikut hilang'], a: 2, why: 'Yang hilang hanya pekerjaan parent class di Start. OnDestroy tidak tersentuh, jadi destroyed tetap tercatat. Di sinilah harga pewarisan: pekerjaan parent yang penting harus dijaga.' }
+  ];
+  var quizAns = {};
+  function renderQuiz() {
+    $('#quiz').innerHTML = QUIZ.map(function (q, qi) {
+      var ans = quizAns[qi];
+      return '<div class="q"><h3>' + (qi + 1) + '. ' + esc(q.q) + '</h3><div class="opts">' + q.o.map(function (o, oi) {
+        var cls = 'opt';
+        if (ans !== undefined) { if (oi === q.a) cls += ' right'; else if (oi === ans) cls += ' wrong'; }
+        return '<button type="button" class="' + cls + '" data-q="' + qi + '" data-o="' + oi + '"' + (ans !== undefined ? ' disabled' : '') + '>' + esc(o) + '</button>';
+      }).join('') + '</div>' + (ans !== undefined ? '<p class="fb">' + (ans === q.a ? 'Benar. ' : 'Belum tepat. ') + esc(q.why) + '</p>' : '') + '</div>';
+    }).join('');
+    var done = Object.keys(quizAns).length, good = Object.keys(quizAns).filter(function (k) { return quizAns[k] === QUIZ[k].a; }).length;
+    $('#quizScore').textContent = done ? 'Benar ' + good + ' dari ' + done + ' yang dijawab (total ' + QUIZ.length + ' soal).' : QUIZ.length + ' soal';
+  }
+  $('#quiz').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.opt'); if (!b || b.disabled) return;
+    quizAns[parseInt(b.getAttribute('data-q'), 10)] = parseInt(b.getAttribute('data-o'), 10);
+    renderQuiz();
+  });
+  $('#quizReset').addEventListener('click', function () { quizAns = {}; renderQuiz(); });
+  renderQuiz();
+
+  /* ---------- loop utama ---------- */
+  var last = performance.now();
+  function frame(t) {
+    var dt = Math.min((t - last) / 1000, 0.1); last = t;
+    objs.slice().forEach(function (o) {
+      o.p += dt * o.fs / 12;
+      o.bar.style.transform = 'scaleX(' + Math.min(o.p, 1) + ')';
+      if (o.p >= 1) destroyObj(o);
+    });
+    simUpdate(dt);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+
+</body></html>
